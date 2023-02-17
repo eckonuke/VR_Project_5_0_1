@@ -54,7 +54,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = "VR_Settings|ModuleSetting")
 		TEnumAsByte<enum EHMDTrackingOrigin::Type> trackOrigin;
 
-
+	UPROPERTY(EditAnywhere, Category = "VR_Settings|ModuleSetting")
+	TSubclassOf<class AActor> testActor;
+	UPROPERTY(EditAnywhere)
+	FVector minSize = FVector(0.05f);
+	UPROPERTY(EditAnywhere)
+	FVector maxSize = FVector(0.1f);
 
 private:
 
@@ -64,6 +69,10 @@ private:
 	void OnTumbstrickTouchLeft();
 	void Horizontal_Left(float value);
 	void Vertical_Left(float value);
-
+	void IndexPinch(float value);
+	void MiddleClick();
+	void MiddleClickEnd();
 	FString hor, ver;
+	AActor* spawnedActor;
+	float indexValue;
 };

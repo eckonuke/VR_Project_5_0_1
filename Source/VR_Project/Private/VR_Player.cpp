@@ -5,6 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "MotionControllerComponent.h"
 #include "Components/TextRenderComponent.h"
+#include <GameFramework/Actor.h>
 
 
 
@@ -61,6 +62,11 @@ void AVR_Player::BeginPlay()
 	// 헤드 장비의 기준 위치를 설정한다.
 	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(trackOrigin.GetValue());
 
+	if (testActor != nullptr) {
+		FActorSpawnParameters param;
+		param.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		spawnedActor = GetWorld()->SpawnActor<AActor>(testActor, cam->GetComponentLocation() + cam->GetForwardVector() * 30.0f, FRotator::ZeroRotator, param);
+	}
 }
 
 // Called every frame
@@ -68,9 +74,14 @@ void AVR_Player::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	FString msg = hor + ver;
-	leftLog->SetText(FText::FromString(msg));
-	UE_LOG(LogTemp, Log, TEXT("%s"), *msg);
+	//FString msg = hor + ver;
+	//leftLog->SetText(FText::FromString(msg));
+	//UE_LOG(LogTemp, Log, TEXT("%s"), *msg);
+	FVector newScale = FMath::Lerp(minSize, maxSize, indexValue);
+	if (spawnedActor != nullptr) {
+		spawnedActor->SetActorRelativeScale3D(newScale);
+	}
+
 }
 
 // Called to bind functionality to input
@@ -78,13 +89,16 @@ void AVR_Player::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("TriggerLeft", IE_Pressed, this, &AVR_Player::OnTriggerLeft);
-	PlayerInputComponent->BindAction("GripLeft", IE_Pressed, this, &AVR_Player::OnGripLeft);
-	PlayerInputComponent->BindAction("TriggerTouchLeft", IE_Pressed, this, &AVR_Player::OnTriggerTouchLeft);
-	PlayerInputComponent->BindAction("TumbstickTouchLeft", IE_Pressed, this, &AVR_Player::OnTumbstrickTouchLeft);
+	//PlayerInputComponent->BindAction("TriggerLeft", IE_Pressed, this, &AVR_Player::OnTriggerLeft);
+	//PlayerInputComponent->BindAction("GripLeft", IE_Pressed, this, &AVR_Player::OnGripLeft);
+	//PlayerInputComponent->BindAction("TriggerTouchLeft", IE_Pressed, this, &AVR_Player::OnTriggerTouchLeft);
+	//PlayerInputComponent->BindAction("TumbstickTouchLeft", IE_Pressed, this, &AVR_Player::OnTumbstrickTouchLeft);
 
-	PlayerInputComponent->BindAxis("ThumbstickHorizontal", this, &AVR_Player::Horizontal_Left);
-	PlayerInputComponent->BindAxis("ThumbstickVertical", this, &AVR_Player::Vertical_Left);
+	//PlayerInputComponent->BindAxis("ThumbstickHorizontal", this, &AVR_Player::Horizontal_Left);
+	//PlayerInputComponent->BindAxis("ThumbstickVertical", this, &AVR_Player::Vertical_Left);
+	PlayerInputComponent->BindAxis("Index_pinch", this, &AVR_Player::IndexPinch);
+	PlayerInputComponent->BindAction("Middle_Click", IE_Pressed, this, &AVR_Player::MiddleClick);
+	PlayerInputComponent->BindAction("Middle_Click", IE_Released, this, &AVR_Player::MiddleClickEnd);
 }
 
 void AVR_Player::OnTriggerLeft()
@@ -125,5 +139,20 @@ void AVR_Player::Vertical_Left(float value)
 	ver = FString::Printf(TEXT("\r\nY: %f"), value);
 }
 
+//손가락의 구부림 정도를 출력하는 함수
+//구부림의 기준은 엄지 손가락과의 거리이다
+void AVR_Player::IndexPinch(float value) {
+	indexValue = value;
+	leftLog->SetText(FText::FromString(FString::Printf(TEXT("Index : %f"), value)));
+}
 
+//엄지와 닿았을 때 실행될 함수
+void AVR_Player::MiddleClick() {
+	rightLog->SetText(FText::FromString(FString::Printf(TEXT("Click"))));
+}
+
+//엄지로부터 떨어졌을때 실행될 함수
+void AVR_Player::MiddleClickEnd() {
+	rightLog->SetText(FText::FromString(FString::Printf(TEXT("Release"))));
+}
 
